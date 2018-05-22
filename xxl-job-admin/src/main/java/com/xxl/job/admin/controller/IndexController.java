@@ -107,7 +107,7 @@ public class IndexController {
 	public ReturnT<String> logout(HttpServletRequest request, HttpServletResponse response){
 		if (this.ifLogin(request)) {
 			String token = CookieUtil.getValue(request, LOGIN_IDENTITY_KEY);
-			CookieUtil.remove(request, response, token);
+			CookieUtil.remove(request, response, LOGIN_IDENTITY_KEY);
 			userRedis.delete(token);
 		}
 		return ReturnT.SUCCESS;
