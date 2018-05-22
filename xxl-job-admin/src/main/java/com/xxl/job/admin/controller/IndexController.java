@@ -2,7 +2,6 @@ package com.xxl.job.admin.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xxl.job.admin.controller.annotation.PermessionLimit;
-import com.xxl.job.admin.controller.interceptor.PermissionInterceptor;
 import com.xxl.job.admin.core.model.User;
 import com.xxl.job.admin.core.util.CookieUtil;
 import com.xxl.job.admin.core.util.I18nUtil;
@@ -107,7 +106,9 @@ public class IndexController {
 	@PermessionLimit(limit=false)
 	public ReturnT<String> logout(HttpServletRequest request, HttpServletResponse response){
 		if (this.ifLogin(request)) {
-			PermissionInterceptor.logout(request, response);
+			String token = CookieUtil.getValue(request, LOGIN_IDENTITY_KEY);
+			CookieUtil.remove(request, response, token);
+			userRedis.delete(token);
 		}
 		return ReturnT.SUCCESS;
 	}
