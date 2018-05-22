@@ -1,10 +1,14 @@
 package com.xxl.job.admin.service.impl;
 
 import com.xxl.job.admin.core.model.User;
+import com.xxl.job.admin.core.util.CookieUtil;
 import com.xxl.job.admin.dao.XxlJobUserDao;
 import com.xxl.job.admin.service.IUserService;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.math.BigInteger;
 
 /**
  * @author ljn
@@ -17,12 +21,8 @@ public class UserServiceImpl implements IUserService {
     private XxlJobUserDao  userDao;
 
     @Override
-    public boolean findByNameAndPassword(String userName, String password) {
-        User user = userDao.findByNameAndPassword(userName, password);
-        if (user == null) {
-            return false;
-        }
-
-        return true;
+    public User findByNameAndPassword(String userName, String password) {
+        return userDao.findByNameAndPassword(userName, password);
     }
+
 }

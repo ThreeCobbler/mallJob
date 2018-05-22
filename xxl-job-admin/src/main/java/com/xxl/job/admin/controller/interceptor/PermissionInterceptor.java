@@ -1,5 +1,6 @@
 package com.xxl.job.admin.controller.interceptor;
 
+import com.xxl.job.admin.controller.IndexController;
 import com.xxl.job.admin.controller.annotation.PermessionLimit;
 import com.xxl.job.admin.core.conf.XxlJobAdminConfig;
 import com.xxl.job.admin.core.model.User;
@@ -24,6 +25,9 @@ public class PermissionInterceptor extends HandlerInterceptorAdapter {
 
 	@Autowired
 	private IUserRedis userRedis;
+
+	@Autowired
+	private IndexController indexController;
 
 
 	public static final String LOGIN_IDENTITY_KEY = "XXL_JOB_LOGIN_IDENTITY";
@@ -58,13 +62,13 @@ public class PermissionInterceptor extends HandlerInterceptorAdapter {
 	public static void logout(HttpServletRequest request, HttpServletResponse response){
 		CookieUtil.remove(request, response, LOGIN_IDENTITY_KEY);
 	}
-	public static boolean ifLogin(HttpServletRequest request){
-		String indentityInfo = CookieUtil.getValue(request, LOGIN_IDENTITY_KEY);
-		if (indentityInfo==null || !LOGIN_IDENTITY_TOKEN.equals(indentityInfo.trim())) {
-			return false;
-		}
-		return true;
-	}
+//	public static boolean ifLogin(HttpServletRequest request){
+//		String indentityInfo = CookieUtil.getValue(request, LOGIN_IDENTITY_KEY);
+//		if (indentityInfo==null || !LOGIN_IDENTITY_TOKEN.equals(indentityInfo.trim())) {
+//			return false;
+//		}
+//		return true;
+//	}
 
 	public boolean checkLogin(HttpServletRequest request) throws IOException {
 		String token = CookieUtil.getValue(request, LOGIN_IDENTITY_KEY);
@@ -84,7 +88,7 @@ public class PermissionInterceptor extends HandlerInterceptorAdapter {
 			return super.preHandle(request, response, handler);
 		}
 		
-		if (!ifLogin(request)) {
+		if (!indexController.ifLogin(request)) {
 			HandlerMethod method = (HandlerMethod)handler;
 			PermessionLimit permission = method.getMethodAnnotation(PermessionLimit.class);
 			if (permission == null || permission.limit()) {

@@ -1,5 +1,7 @@
 package com.xxl.job.admin.service;
 
+import com.xxl.job.admin.core.model.User;
+
 /**
  * @author ljn
  * @date 2018/5/21.
@@ -12,5 +14,5 @@ public interface IUserService {
      * @param password
      * @return
      */
-    boolean findByNameAndPassword(String userName,String password);
+    User findByNameAndPassword(String userName, String password);
 }

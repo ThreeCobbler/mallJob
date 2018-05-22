@@ -1,9 +1,12 @@
 package com.xxl.job.admin.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xxl.job.admin.controller.annotation.PermessionLimit;
 import com.xxl.job.admin.controller.interceptor.PermissionInterceptor;
+import com.xxl.job.admin.core.model.User;
 import com.xxl.job.admin.core.util.CookieUtil;
 import com.xxl.job.admin.core.util.I18nUtil;
+import com.xxl.job.admin.service.IUserRedis;
 import com.xxl.job.admin.service.IUserService;
 import com.xxl.job.admin.service.XxlJobService;
 import com.xxl.job.core.biz.model.ReturnT;
@@ -22,6 +25,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -39,6 +43,9 @@ public class IndexController {
 
 	@Autowired
 	private IUserService userService;
+
+	@Autowired
+	IUserRedis userRedis;
 
 	public static final String LOGIN_IDENTITY_KEY = "XXL_JOB_LOGIN_IDENTITY";
 
@@ -61,7 +68,7 @@ public class IndexController {
 	@RequestMapping("/toLogin")
 	@PermessionLimit(limit=false)
 	public String toLogin(Model model, HttpServletRequest request) {
-		if (PermissionInterceptor.ifLogin(request)) {
+		if (this.ifLogin(request)) {
 			return "redirect:/";
 		}
 		return "login";
@@ -70,9 +77,9 @@ public class IndexController {
 	@RequestMapping(value="login", method=RequestMethod.POST)
 	@ResponseBody
 	@PermessionLimit(limit=false)
-	public ReturnT<String> loginDo(HttpServletRequest request, HttpServletResponse response, String userName, String password, String ifRemember){
+	public ReturnT<String> loginDo(HttpServletRequest request, HttpServletResponse response, String userName, String password, String ifRemember) throws JsonProcessingException {
 		// valid
-		if (PermissionInterceptor.ifLogin(request)) {
+		if (this.ifLogin(request)) {
 			return ReturnT.SUCCESS;
 		}
 
@@ -82,15 +89,16 @@ public class IndexController {
 		}
 		boolean ifRem = (StringUtils.isNotBlank(ifRemember) && "on".equals(ifRemember))?true:false;
 
-		boolean result = userService.findByNameAndPassword(userName, password);
+		User user = userService.findByNameAndPassword(userName, password);
 		// do login
 //		boolean loginRet = PermissionInterceptor.login(response, userName, password, ifRem);
-		if (!result) {
+		if (user == null) {
 			return new ReturnT<String>(500, I18nUtil.getString("login_param_unvalid"));
 		}
 		String tokenTmp = DigestUtils.md5Hex(userName + "_" + password);
 		tokenTmp = new BigInteger(1, tokenTmp.getBytes()).toString(16);
 		CookieUtil.set(response,LOGIN_IDENTITY_KEY,tokenTmp,ifRem);
+		userRedis.addToken(tokenTmp,user);
 		return ReturnT.SUCCESS;
 	}
 	
@@ -98,7 +106,7 @@ public class IndexController {
 	@ResponseBody
 	@PermessionLimit(limit=false)
 	public ReturnT<String> logout(HttpServletRequest request, HttpServletResponse response){
-		if (PermissionInterceptor.ifLogin(request)) {
+		if (this.ifLogin(request)) {
 			PermissionInterceptor.logout(request, response);
 		}
 		return ReturnT.SUCCESS;
@@ -119,6 +127,20 @@ public class IndexController {
 		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		dateFormat.setLenient(false);
 		binder.registerCustomEditor(Date.class, new CustomDateEditor(dateFormat, true));
+	}
+
+	public boolean ifLogin(HttpServletRequest request)  {
+		String token = CookieUtil.getValue(request, LOGIN_IDENTITY_KEY);
+		User user = null;
+		try {
+			user = userRedis.getUser(token);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		if (user == null) {
+			return false;
+		}
+		return true;
 	}
 	
 }
