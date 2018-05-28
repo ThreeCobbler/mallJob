@@ -66,7 +66,7 @@
 			</if>
 		</trim>
 		ORDER BY id DESC
-		LIMIT #{offset} offset #{pagesize}
+		LIMIT #{pagesize} offset #{offset}
 	</select>
 	
 	<select id="pageListCount" parameterType="java.util.HashMap" resultType="int">

@@ -71,7 +71,7 @@
 			</if>
 		</trim>
 		ORDER BY id DESC
-		LIMIT #{offset} OFFSET #{pagesize}
+		LIMIT #{pagesize} offset #{offset}
 	</select>
 	
 	<select id="pageListCount" resultType="int">
@@ -198,7 +198,7 @@
 							</if>
 						</trim>
 						ORDER BY t.trigger_time desc
-						LIMIT 0 offset #{clearBeforeNum}
+						LIMIT #{clearBeforeNum} offset 0
 					) t1
 				)
 			</if>
